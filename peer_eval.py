@@ -1,3 +1,8 @@
+bash
+
+cat /home/claude/pe_app_v2/peer_eval.py
+출력
+
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os, re, threading
@@ -287,11 +292,21 @@ def build_excel(records, out_path, roster):
         for i in range(len(members), max_members):
             _cell(ws, row, 3+i, None, fill="F0F0F0")
 
-        # 합 = 받은 총점
-        received = sum(eval_map.get((ev, name), 0) for ev in members if ev != name)
+        # 합 = SUM 수식
         sc = 3+max_members
-        _cell(ws, row, sc, received, fill=_GREEN, bold=True)
-        _cell(ws, row, 4+max_members, round(received/100, 2), fill=_GREEN, bold=True, fmt="0.00")
+        sum_range = f"{get_column_letter(3)}{row}:{get_column_letter(2+max_members)}{row}"
+        c = ws.cell(row=row, column=sc, value=f"=SUM({sum_range})")
+        c.font = Font(bold=True, name="Malgun Gothic", size=10)
+        c.fill = _fill(_GREEN); c.alignment = Alignment(horizontal="center")
+        c.border = Border(left=_side(), right=_side(), top=_side(), bottom=_side())
+
+        # Weight = 합/100 수식
+        wc = 4+max_members
+        c = ws.cell(row=row, column=wc, value=f"={get_column_letter(sc)}{row}/100")
+        c.font = Font(bold=True, name="Malgun Gothic", size=10)
+        c.fill = _fill(_GREEN); c.alignment = Alignment(horizontal="center")
+        c.number_format = "0.00"
+        c.border = Border(left=_side(), right=_side(), top=_side(), bottom=_side())
 
         ws.row_dimensions[row].height = 18; row += 1
 
@@ -307,11 +322,12 @@ def build_excel(records, out_path, roster):
                 cell.border = Border(left=old.left, right=old.right,
                     top=_side("medium",_NAVY) if r==s else old.top,
                     bottom=_side("medium",_NAVY) if r==e else old.bottom)
-        # 팀 weight 합계
-        tw = sum(round(sum(eval_map.get((ev,n),0) for ev in members if ev!=n)/100,2)
-                 for n in members)
-        c = ws.cell(row=e, column=total_cols+1, value=round(tw,2))
+        # 팀 weight 합계 = SUM 수식
+        wc = 4+max_members
+        weight_range = f"{get_column_letter(wc)}{s}:{get_column_letter(wc)}{e}"
+        c = ws.cell(row=e, column=total_cols+1, value=f"=SUM({weight_range})")
         c.font = Font(italic=True, color="888888", name="Malgun Gothic", size=9)
+        c.number_format = "0.00"
         c.alignment = Alignment(horizontal="center")
 
     # ── 제출현황 시트 ──
